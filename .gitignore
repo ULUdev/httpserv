@@ -1,7 +1,7 @@
-httpserv
 *.o
 .cache
 *\~
 compile_commands.json
-test/*
-!test/*.c
+test/mock
+cweb
+*.so

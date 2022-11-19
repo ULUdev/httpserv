@@ -1,22 +1,29 @@
-CC=gcc
-LD= ld
-CFLAGS= -std=c11 -Wall -ggdb -Iinclude -ggdb
-LDFLAGS= -lpthread
-SRC= $(wildcard src/**/*.c) $(wildcard src/*.c)
+CC = gcc
+LD = ld
+CFLAGS = -fPIC -c -std=c11 -Wall -Iinclude -ggdb
+LDFLAGS = -shared -lpthread
+SRC = $(wildcard src/**/*.c) $(wildcard src/*.c)
 
-all: httpserv
+all: libhttpserv.so cweb
 
-httpserv: $(SRC)
-	$(CC) $^ $(CFLAGS) $(LDFLAGS) -o $@
+cweb: cweb.c libhttpserv.so
+	$(CC) cweb.c -std=c11 -Wall -ggdb -Iinclude -L. -lpthread -lhttpserv -o cweb
+
+libhttpserv.so: $(SRC:.c=.o)
+	$(LD) $^ $(LDFLAGS) -o $@
+
+%.o: %.c
+	$(CC) $^ $(CFLAGS) -o $@
 
 clean:
-	rm -rf httpserv $(subst .c,,$(wildcard test/*.c))
+	rm -rf httpserv test/mock $(SRC:.c=.o) cweb
 
 format:
-	clang-format -i $(SRC)
+	clang-format -i $(SRC) $(wildcard test/*.c) cweb.c
 
-tests: $(subst .c,,$(wildcard test/*.c))
+tests: libhttpserv.so test/mock
+	LD_LIBRARY_PATH="$$LD_LIBRARY_PATH:$$PWD" ./test/mock
 
-test/%: test/%.c
-	$(CC) $(SRC) $^ -DHTTPSERV_UNIT_TEST $(CFLAGS) $(LDFLAGS) -lcmocka -o $@
-	./$@
+
+test/mock: $(wildcard test/*.c)
+	$(MAKE) -C test

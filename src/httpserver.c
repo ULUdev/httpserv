@@ -21,7 +21,8 @@ httpserv_httpserver_t *httpserv_httpserver_new(const char *ipaddr,
     free(serv);
     return NULL;
   }
-  if (bind(serv->socket, (struct sockaddr *) serv->addr, sizeof(*serv->addr)) < 0) {
+  if (bind(serv->socket, (struct sockaddr *)serv->addr, sizeof(*serv->addr)) <
+      0) {
     httpserv_logging_err("failed to bind socket: %s", strerror(errno));
     httpserv_httpserver_destroy(serv);
     return NULL;

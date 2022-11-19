@@ -4,6 +4,10 @@
 #include <bits/pthreadtypes.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#define HTTPSERV_TP_WORKER_SLEEP_TIME 1
 
 threadpool_t *threadpool_new(const size_t size) {
   if (size == 0)
@@ -17,9 +21,15 @@ threadpool_t *threadpool_new(const size_t size) {
   }
   return pool;
 }
-void threadpool_add_work(threadpool_t *pool, void (*function)(void *),
-                         void *arg) {
-  threadpool_job_queue_add_job(pool->queue, threadpool_job_new(function, arg));
+threadpool_job_result_t *
+threadpool_add_work(threadpool_t *pool, void *(*function)(void *), void *arg) {
+  threadpool_job_t *job = threadpool_job_new(function, arg);
+  threadpool_job_queue_add_job(pool->queue, job);
+  return job->jres;
+}
+void threadpool_ensure_jobs_done(threadpool_t *pool) {
+  while (pool->queue->size > 0) {
+  }
 }
 void threadpool_destroy(threadpool_t *pool) {
   for (int i = 0; i < pool->numthreads; i++) {
@@ -30,22 +40,19 @@ void threadpool_destroy(threadpool_t *pool) {
 }
 
 static void *threadpool_worker_func(void *arg) {
-  int res;
   threadpool_worker_data_t *data = (threadpool_worker_data_t *)arg;
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
   while (1) {
-    pthread_mutex_lock(data->pool->queue->rwmutex);
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     if (data->pool->queue->size > 0) {
-      httpserv_logging_log("Worker %zu handling job...\n", data->worker->id);
       threadpool_job_t *job = threadpool_job_queue_pop_job(data->pool->queue);
-      pthread_mutex_unlock(data->pool->queue->rwmutex);
-      res = threadpool_job_exec(job);
-      if (res == 1) {
-        // job function was undefined
+      httpserv_logging_log("Worker %zu executing job...", data->worker->id);
+      threadpool_job_exec(job);
+      if (job->jres->done == -1) {
+        httpserv_logging_wrn("Worker %zu: job failed!", data->worker->id);
       }
     } else {
-      pthread_mutex_unlock(data->pool->queue->rwmutex);
+      sleep(HTTPSERV_TP_WORKER_SLEEP_TIME);
     }
 
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
