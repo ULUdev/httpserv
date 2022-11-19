@@ -3,3 +3,5 @@ httpserv
 .cache
 *\~
 compile_commands.json
+test/*
+!test/*.c

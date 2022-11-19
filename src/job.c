@@ -10,13 +10,12 @@ threadpool_job_t *threadpool_job_new(void (*function)(void *), void *arg) {
   return job;
 }
 int threadpool_job_exec(threadpool_job_t *job) {
-  if (!job->function) return 1;
+  if (!job->function)
+    return 1;
   job->function(job->arg);
   return 0;
 }
-void threadpool_job_destroy(threadpool_job_t *job) {
-  free(job);
-}
+void threadpool_job_destroy(threadpool_job_t *job) { free(job); }
 
 threadpool_job_queue_t *threadpool_job_queue_new() {
   threadpool_job_queue_t *queue = malloc(sizeof(threadpool_job_queue_t));
@@ -27,7 +26,8 @@ threadpool_job_queue_t *threadpool_job_queue_new() {
   pthread_mutex_init(queue->rwmutex, NULL);
   return queue;
 }
-void threadpool_job_queue_add_job(threadpool_job_queue_t *queue, threadpool_job_t *job) {
+void threadpool_job_queue_add_job(threadpool_job_queue_t *queue,
+                                  threadpool_job_t *job) {
   if (!queue->head) {
     queue->tail = job;
     queue->head = job;
@@ -51,7 +51,7 @@ threadpool_job_t *threadpool_job_queue_pop_job(threadpool_job_queue_t *queue) {
 }
 void threadpool_job_queue_destroy(threadpool_job_queue_t *queue) {
   threadpool_job_t *cur = queue->head;
-  for (int i=0;i<queue->size;i++) {
+  for (int i = 0; i < queue->size; i++) {
     threadpool_job_t *next = cur->next;
     threadpool_job_destroy(cur);
     cur = next;

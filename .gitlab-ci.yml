@@ -1,0 +1,15 @@
+image: gcc
+
+before_script:
+  - apt-get update
+  - apt-get install libcmocka-dev -y
+
+build:
+  stage: build
+  script:
+    - make
+
+test:
+  stage: test
+  script:
+    - make tests -k
