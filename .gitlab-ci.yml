@@ -8,8 +8,12 @@ build:
   stage: build
   script:
     - make
+  tags:
+    - x86_64
 
 test:
   stage: test
   script:
     - make tests -k
+  tags:
+    - x86_64
