@@ -21,12 +21,12 @@ libhttpserv.so: $(SRC:.c=.o)
 	$(CC) $^ $(CFLAGS) -o $@
 
 clean:
-	rm -rf httpserv test/mock $(SRC:.c=.o) cweb
+	rm -rf httpserv test/mock $(SRC:.c=.o) cweb libtree.so
 
 format:
 	clang-format -i $(SRC) $(wildcard test/*.c) cweb.c
 
-tests: libhttpserv.so test/mock
+tests: libtree.so libhttpserv.so test/mock
 	LD_LIBRARY_PATH="$$LD_LIBRARY_PATH:$$PWD" ./test/mock
 
 
