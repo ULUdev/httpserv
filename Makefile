@@ -5,7 +5,7 @@ LDFLAGS = -shared -L. -ltree -lpthread
 SRC = $(wildcard src/**/*.c) $(wildcard src/*.c)
 PREFIX = /usr/local
 
-all: libhttpserv.so cweb libtree.so
+all: libtree.so libhttpserv.so cweb
 
 libtree.so:
 	$(MAKE) -C libtree
