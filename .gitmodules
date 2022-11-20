@@ -1,0 +1,3 @@
+[submodule "libtree"]
+	path = libtree
+	url = https://gitlab.sokoll.com/moritz/libtree

@@ -46,10 +46,14 @@ static void *threadpool_worker_func(void *arg) {
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
     if (data->pool->queue->size > 0) {
       threadpool_job_t *job = threadpool_job_queue_pop_job(data->pool->queue);
-      httpserv_logging_log("Worker %zu executing job...", data->worker->id);
-      threadpool_job_exec(job);
-      if (job->jres->done == -1) {
-        httpserv_logging_wrn("Worker %zu: job failed!", data->worker->id);
+      if (job) {
+        httpserv_logging_log("Worker %zu executing job...", data->worker->id);
+        threadpool_job_exec(job);
+        if (job->jres->done == -1) {
+          httpserv_logging_wrn("Worker %zu: job failed!", data->worker->id);
+        }
+      } else {
+        pthread_cond_wait(data->pool->queue->cond, data->pool->queue->rwmutex);
       }
     } else {
       sleep(HTTPSERV_TP_WORKER_SLEEP_TIME);

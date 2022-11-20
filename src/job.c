@@ -62,6 +62,8 @@ threadpool_job_queue_t *threadpool_job_queue_new() {
   queue->size = 0;
   queue->rwmutex = malloc(sizeof(pthread_mutex_t));
   pthread_mutex_init(queue->rwmutex, NULL);
+  queue->cond = malloc(sizeof(pthread_cond_t));
+  pthread_cond_init(queue->cond, NULL);
   return queue;
 }
 void threadpool_job_queue_add_job(threadpool_job_queue_t *queue,
@@ -76,6 +78,7 @@ void threadpool_job_queue_add_job(threadpool_job_queue_t *queue,
     queue->tail = job;
   }
   queue->size++;
+  pthread_cond_signal(queue->cond);
   pthread_mutex_unlock(queue->rwmutex);
 }
 threadpool_job_t *threadpool_job_queue_pop_job(threadpool_job_queue_t *queue) {

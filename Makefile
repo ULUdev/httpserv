@@ -1,13 +1,18 @@
 CC = gcc
 LD = ld
-CFLAGS = -fPIC -c -std=c11 -Wall -Iinclude -ggdb
-LDFLAGS = -shared -lpthread
+CFLAGS = -fPIC -c -std=c11 -Wall -Iinclude -Ilibtree/include -ggdb
+LDFLAGS = -shared -L. -ltree -lpthread
 SRC = $(wildcard src/**/*.c) $(wildcard src/*.c)
+PREFIX = /usr/local
 
-all: libhttpserv.so cweb
+all: libhttpserv.so cweb libtree.so
+
+libtree.so:
+	$(MAKE) -C libtree
+	cp libtree/libtree.so .
 
 cweb: cweb.c libhttpserv.so
-	$(CC) cweb.c -std=c11 -Wall -ggdb -Iinclude -L. -lpthread -lhttpserv -o cweb
+	$(CC) cweb.c -std=c11 -Wall -ggdb -Iinclude -L. -lpthread -ltree -lhttpserv -o cweb
 
 libhttpserv.so: $(SRC:.c=.o)
 	$(LD) $^ $(LDFLAGS) -o $@
