@@ -4,6 +4,9 @@ before_script:
   - apt-get update
   - apt-get install libcmocka-dev -y
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 build:
   stage: build
   script:
