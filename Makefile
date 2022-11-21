@@ -12,7 +12,7 @@ libtree.so:
 	cp libtree/libtree.so .
 
 cweb: cweb.c libhttpserv.so
-	$(CC) cweb.c -std=c11 -Wall -ggdb -Iinclude -L. -lpthread -ltree -lhttpserv -o cweb
+	$(CC) cweb.c -std=c11 -Wall -ggdb -Iinclude -Ilibtree/include -L. -lpthread -ltree -lhttpserv -o cweb
 
 libhttpserv.so: $(SRC:.c=.o)
 	$(LD) $^ $(LDFLAGS) -o $@

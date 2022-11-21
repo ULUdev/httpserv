@@ -1,5 +1,5 @@
 #include "config.h"
-#include "logging.h"
+//#include "logging.h"
 #include "node.h"
 #include "tree.h"
 #include "stringh.h"
@@ -15,7 +15,8 @@ typedef struct {
 } httpserv_cfg_t;
 
 httpserv_cfg_t *httpserv_config_process_line(const char *line,
-                                             const size_t linenum) {
+                                             const size_t linenum,
+                                             const char *path) {
   httpserv_cfg_t *cfg = malloc(sizeof(httpserv_cfg_t));
   char *label = malloc(2);
   char *value = malloc(2);
@@ -40,6 +41,9 @@ httpserv_cfg_t *httpserv_config_process_line(const char *line,
     }
   }
   if (label_read == 1) {
+    fprintf(stderr,
+            "In file \"%s\": line %zu doesn't contain an assignment operator\n",
+            path, linenum);
     free(label);
     free(value);
     free(cfg);
@@ -57,8 +61,7 @@ httpserv_cfg_t *httpserv_config_process_line(const char *line,
 tree_t *httpserv_config_load(const char *path) {
   FILE *conf_file = fopen(path, "r");
   if (!conf_file) {
-    httpserv_logging_err("failed to open config file \"%s\": %s", path,
-                         strerror(errno));
+    fprintf(stderr, "failed to open file \"%s\": %s", path, strerror(errno));
     return NULL;
   }
   tree_t *cfg_tree = tree_new();
@@ -70,13 +73,12 @@ tree_t *httpserv_config_load(const char *path) {
   while (feof(conf_file) == 0) {
     size_t bytes_read = fread(&charbuf, 1, 1, conf_file);
     if (bytes_read == 0) {
-      // httpserv_logging_err("failed to read bytes from stream");
-      // failed = 0;
       break;
     }
     if (charbuf == '\n') {
       linebuf = strncat(linebuf, &charbuf, 1);
-      httpserv_cfg_t *cfg_res = httpserv_config_process_line(linebuf, linenum);
+      httpserv_cfg_t *cfg_res =
+          httpserv_config_process_line(linebuf, linenum, path);
       if (!cfg_res) {
         // line wasn't parsed properly
         continue;
