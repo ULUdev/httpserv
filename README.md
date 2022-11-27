@@ -10,8 +10,10 @@ need to have `cmocka` installed.
 ### Building
 1. `git submodule init`
 2. `git submodule update`
-3. `make`
-This will build the library and
+3. `./configure`
+4. `make`
+This will build `libhttpserv.so` and `cweb`. For the flags you can use with
+`./configure.sh` run `./configure.sh -h`
 ### Testing
 For testing you need to have `cmocka` installed. If you have it installed you
 can run `make tests` and it will run through the tests.

@@ -1,5 +1,6 @@
 #ifndef __THREADPOOL_H__
 #define __THREADPOOL_H__
+#include <bits/pthreadtypes.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include "job.h"
@@ -13,6 +14,8 @@ typedef struct {
   threadpool_worker_t **workers;
   size_t numthreads;
   threadpool_job_queue_t *queue;
+  pthread_mutex_t *mutex;
+  pthread_cond_t *cond;
 } threadpool_t;
 
 typedef struct {

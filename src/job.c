@@ -3,6 +3,7 @@
 #include <asm-generic/errno-base.h>
 #include <bits/pthreadtypes.h>
 #include <pthread.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <errno.h>
 
@@ -14,6 +15,11 @@ threadpool_job_result_t *threadpool_job_result_new() {
     httpserv_logging_err("creation of mutex failed");
     return NULL;
   }
+  jres->cond = malloc(sizeof(pthread_cond_t));
+  if (pthread_cond_init(jres->cond, NULL) != 0) {
+    httpserv_logging_err("creation of condition variable failed");
+    return NULL;
+  }
   jres->res = NULL;
   return jres;
 }
@@ -23,9 +29,11 @@ void threadpool_job_result_set(threadpool_job_result_t *jres, void *res) {
   pthread_mutex_unlock(jres->mutex);
 }
 void *threadpool_job_result_await(threadpool_job_result_t *jres) {
-  while (jres->done > 0) {
-  }
   pthread_mutex_lock(jres->mutex);
+  while (jres->done > 0) {
+    pthread_cond_wait(jres->cond, jres->mutex);
+  }
+  pthread_mutex_unlock(jres->mutex);
   return jres->res;
 }
 void threadpool_job_result_destroy(threadpool_job_result_t *jres) {
@@ -49,8 +57,12 @@ void *threadpool_job_exec(threadpool_job_t *job) {
     pthread_mutex_unlock(job->jres->mutex);
     return NULL;
   }
-  threadpool_job_result_set(job->jres, job->function(job->arg));
+  void *result = job->function(job->arg);
+  threadpool_job_result_set(job->jres, result);
+  pthread_mutex_lock(job->jres->mutex);
   job->jres->done = 0;
+  pthread_cond_signal(job->jres->cond);
+  pthread_mutex_unlock(job->jres->mutex);
   return job->jres->res;
 }
 void threadpool_job_destroy(threadpool_job_t *job) { free(job); }

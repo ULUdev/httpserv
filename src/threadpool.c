@@ -16,6 +16,10 @@ threadpool_t *threadpool_new(const size_t size) {
   pool->numthreads = size;
   pool->workers = malloc(size * sizeof(threadpool_worker_t));
   pool->queue = threadpool_job_queue_new();
+  pool->mutex = malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_init(pool->mutex, NULL);
+  pool->cond = malloc(sizeof(pthread_cond_t));
+  pthread_cond_init(pool->cond, NULL);
   for (size_t i = 0; i < size; i++) {
     pool->workers[i] = threadpool_worker_new(i, pool);
   }
@@ -24,7 +28,10 @@ threadpool_t *threadpool_new(const size_t size) {
 threadpool_job_result_t *
 threadpool_add_work(threadpool_t *pool, void *(*function)(void *), void *arg) {
   threadpool_job_t *job = threadpool_job_new(function, arg);
+  pthread_mutex_lock(pool->mutex);
   threadpool_job_queue_add_job(pool->queue, job);
+  pthread_cond_signal(pool->cond);
+  pthread_mutex_unlock(pool->mutex);
   return job->jres;
 }
 void threadpool_ensure_jobs_done(threadpool_t *pool) {
@@ -36,29 +43,31 @@ void threadpool_destroy(threadpool_t *pool) {
     threadpool_worker_stop(pool->workers[i]);
   }
   threadpool_job_queue_destroy(pool->queue);
+  pthread_mutex_destroy(pool->mutex);
+  pthread_cond_destroy(pool->cond);
   free(pool);
 }
 
 static void *threadpool_worker_func(void *arg) {
   threadpool_worker_data_t *data = (threadpool_worker_data_t *)arg;
   pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+  // threadpool_job_t *job = threadpool_job_queue_pop_job(data->pool->queue);
   while (1) {
-    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-    if (data->pool->queue->size > 0) {
-      threadpool_job_t *job = threadpool_job_queue_pop_job(data->pool->queue);
-      if (job) {
-        httpserv_logging_log("Worker %zu executing job...", data->worker->id);
-        threadpool_job_exec(job);
-        if (job->jres->done == -1) {
-          httpserv_logging_wrn("Worker %zu: job failed!", data->worker->id);
-        }
-      } else {
-        pthread_cond_wait(data->pool->queue->cond, data->pool->queue->rwmutex);
-      }
-    } else {
-      sleep(HTTPSERV_TP_WORKER_SLEEP_TIME);
+    pthread_mutex_lock(data->pool->mutex);
+    threadpool_job_t *job = threadpool_job_queue_pop_job(data->pool->queue);
+    if (!job) {
+      pthread_cond_wait(data->pool->cond, data->pool->mutex);
+      job = threadpool_job_queue_pop_job(data->pool->queue);
     }
-
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+    pthread_mutex_unlock(data->pool->mutex);
+    if (job) {
+      httpserv_logging_log("Worker %zu executing job...", data->worker->id);
+      threadpool_job_exec(job);
+      if (job->jres->done == -1) {
+        httpserv_logging_wrn("Worker %zu: job failed!", data->worker->id);
+      }
+    }
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
   }
   return NULL;

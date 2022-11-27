@@ -61,7 +61,7 @@ httpserv_cfg_t *httpserv_config_process_line(const char *line,
 tree_t *httpserv_config_load(const char *path) {
   FILE *conf_file = fopen(path, "r");
   if (!conf_file) {
-    fprintf(stderr, "failed to open file \"%s\": %s", path, strerror(errno));
+    fprintf(stderr, "failed to open file \"%s\": %s\n", path, strerror(errno));
     return NULL;
   }
   tree_t *cfg_tree = tree_new();

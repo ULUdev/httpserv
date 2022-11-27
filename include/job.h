@@ -5,6 +5,7 @@
 
 typedef struct {
   pthread_mutex_t *mutex;
+  pthread_cond_t *cond;
   void *res;
   int done;
 } threadpool_job_result_t;
