@@ -25,11 +25,13 @@ httpserv_cfg_t *httpserv_config_process_line(const char *line,
   memset(value, '\0', 2);
   for (int i = 0; i < strlen(line); i++) {
     // comment
-    if (line[i] == '#')
+    if (line[i] == '#') {
+      label_read = -1;
       break;
+    }
     if (label_read == 1) {
       if (line[i] == '=') {
-        label_read = 0;
+	label_read = 0;
         continue;
       } else {
         label = strncat(label, &line[i], 1);
@@ -44,6 +46,11 @@ httpserv_cfg_t *httpserv_config_process_line(const char *line,
     fprintf(stderr,
             "In file \"%s\": line %zu doesn't contain an assignment operator\n",
             path, linenum);
+    free(label);
+    free(value);
+    free(cfg);
+    return NULL;
+  } else if (label_read == -1) {
     free(label);
     free(value);
     free(cfg);
@@ -79,10 +86,7 @@ tree_t *httpserv_config_load(const char *path) {
       linebuf = strncat(linebuf, &charbuf, 1);
       httpserv_cfg_t *cfg_res =
           httpserv_config_process_line(linebuf, linenum, path);
-      if (!cfg_res) {
-        // line wasn't parsed properly
-        continue;
-      } else {
+      if (cfg_res) {
         tree_add_node(cfg_tree, cfg_res->label, cfg_res->value);
         free(cfg_res->label);
       }

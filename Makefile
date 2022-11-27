@@ -1,7 +1,7 @@
 CC = gcc
 LD = ld
 CFLAGS = -fPIC -c -std=c11 -Wall -Iinclude -Ilibtree/include -ggdb
-LDFLAGS = -shared -L. -ltree -lpthread
+LDFLAGS = -shared -L -ltree -lpthread
 SRC = $(wildcard src/**/*.c) $(wildcard src/*.c)
 PREFIX = /usr/local
 

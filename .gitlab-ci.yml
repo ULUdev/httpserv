@@ -3,6 +3,7 @@ image: gcc
 before_script:
   - apt-get update
   - apt-get install libcmocka-dev -y
+  - ./configure.sh -d
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
