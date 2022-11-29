@@ -14,12 +14,14 @@ struct HttpservWorkerData {
   int sockfd;
 };
 
+// worker function for the httpserver
 void *httpserv_httpserver_worker(void *arg) {
   /*
    * handle request here
    */
   struct HttpservWorkerData *data = (struct HttpservWorkerData *)arg;
-  if (data->sockfd > 0) shutdown(data->sockfd, SHUT_RDWR);
+  if (data->sockfd > 0)
+    shutdown(data->sockfd, SHUT_RDWR);
 
   free(data);
   return NULL;
@@ -80,9 +82,12 @@ int httpserv_httpserver_run(httpserv_httpserver_t *server, size_t threads) {
   return 0;
 }
 void httpserv_httpserver_destroy(httpserv_httpserver_t *server) {
+  if (!server) return;
   if (close(server->socket) == -1)
     httpserv_logging_err("failed to close socket: %s", strerror(errno));
-  if (server->tp) threadpool_destroy(server->tp);
+  if (server->tp)
+    threadpool_destroy(server->tp);
   free(server->addr);
+  free(server->ip);
   free(server);
 }

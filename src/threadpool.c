@@ -50,7 +50,7 @@ void threadpool_destroy(threadpool_t *pool) {
 
 static void *threadpool_worker_func(void *arg) {
   threadpool_worker_data_t *data = (threadpool_worker_data_t *)arg;
-  pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
   // threadpool_job_t *job = threadpool_job_queue_pop_job(data->pool->queue);
   while (1) {
     pthread_mutex_lock(data->pool->mutex);

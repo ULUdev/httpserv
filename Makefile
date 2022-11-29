@@ -1,6 +1,6 @@
 CC = gcc
 LD = ld
-CFLAGS = -fPIC -c -std=c11 -Wall -Iinclude -Ilibtree/include -ggdb
+CFLAGS = -fPIC -c -std=c11 -Wall -Iinclude -Ilibtree/include -O3
 LDFLAGS = -shared -L -ltree -lpthread
 SRC = $(wildcard src/**/*.c) $(wildcard src/*.c)
 PREFIX = /usr/local
@@ -12,7 +12,7 @@ libtree.so:
 	cp libtree/libtree.so .
 
 cweb: cweb.c libhttpserv.so
-	$(CC) cweb.c -std=c11 -Wall -ggdb -Iinclude -Ilibtree/include -L. -lpthread -ltree -lhttpserv -o cweb
+	$(CC) cweb.c -std=c11 -Wall -O3 -Iinclude -Ilibtree/include -L. -lpthread -ltree -lhttpserv -o cweb
 
 libhttpserv.so: $(SRC:.c=.o)
 	$(LD) $^ $(LDFLAGS) -o $@

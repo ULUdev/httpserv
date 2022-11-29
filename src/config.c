@@ -31,7 +31,7 @@ httpserv_cfg_t *httpserv_config_process_line(const char *line,
     }
     if (label_read == 1) {
       if (line[i] == '=') {
-	label_read = 0;
+        label_read = 0;
         continue;
       } else {
         label = strncat(label, &line[i], 1);
