@@ -1,6 +1,5 @@
 # `httpserv`
-## An http server building library written in C (this project is inspired by
-## [`rsweb`](http://gitlab.sokoll.com/moritz/rsweb))
+## An http server building library written in C (this project is inspired by [`rsweb`](http://gitlab.sokoll.com/moritz/rsweb))
 
 ## Compilation
 ### Dependencies
@@ -12,6 +11,7 @@ need to have `cmocka` installed.
 2. `git submodule update`
 3. `./configure`
 4. `make`
+
 This will build `libhttpserv.so` and `cweb`. For the flags you can use with
 `./configure.sh` run `./configure.sh -h`
 ### Testing

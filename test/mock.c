@@ -11,7 +11,7 @@
 #include <cmocka.h>
 
 int main(void) {
-  httpserv_logging_init("");
+  httpserv_logging_init(NULL);
   const struct CMUnitTest tests[] = {
       cmocka_unit_test(tp_create),   cmocka_unit_test(tp_add_job),
       cmocka_unit_test(serv_create), cmocka_unit_test(streq),

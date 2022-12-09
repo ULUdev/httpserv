@@ -82,7 +82,8 @@ int httpserv_httpserver_run(httpserv_httpserver_t *server, size_t threads) {
   return 0;
 }
 void httpserv_httpserver_destroy(httpserv_httpserver_t *server) {
-  if (!server) return;
+  if (!server)
+    return;
   if (close(server->socket) == -1)
     httpserv_logging_err("failed to close socket: %s", strerror(errno));
   if (server->tp)

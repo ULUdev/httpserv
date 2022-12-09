@@ -35,7 +35,8 @@ void *threadpool_job_exec(threadpool_job_t *job);
 void threadpool_job_destroy(threadpool_job_t *job);
 
 threadpool_job_queue_t *threadpool_job_queue_new();
-void threadpool_job_queue_add_job(threadpool_job_queue_t *queue, threadpool_job_t *job);
+void threadpool_job_queue_add_job(threadpool_job_queue_t *queue,
+                                  threadpool_job_t *job);
 threadpool_job_t *threadpool_job_queue_pop_job(threadpool_job_queue_t *queue);
 void threadpool_job_queue_destroy(threadpool_job_queue_t *queue);
 #endif

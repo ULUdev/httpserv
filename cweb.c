@@ -6,7 +6,6 @@
 #include "tree.h"
 #include "httpserver.h"
 #include "httpserv.h"
-#include <asm-generic/errno-base.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -19,6 +18,8 @@
 #define CWEB_VERSION_MINOR 1
 #define CWEB_VERSION_PATCH 0
 #define CWEB_THREADS_DEFAULT 10
+#define CWEB_DEFAULT_CONF_PATH "/etc/cweb/cweb.conf"
+#define CWEB_DEFAULT_LOG_PATH "/var/log/cweb/cweb.log"
 
 // globals
 tree_t *cfg = NULL;
@@ -55,7 +56,8 @@ const char *CWEB_HELP_STR =
     "  -v,--version: print the version number and exit\n"
     "  -f,--file <file>: use <file> instead of the default configuration "
     "file\n"
-    "  -d,--detach: fork process to the background\n";
+    "  -d,--detach: fork process to the background\n"
+    " -l,--logfile <file>: log to <file>. This will overwrite any setting from the config file\n";
 
 int main(int argc, char **argv) {
   // signal handler
@@ -65,7 +67,8 @@ int main(int argc, char **argv) {
   // consider using sigaction instead
   signal(SIGINT, &handle_sigint);
 
-  char *path = "/etc/cweb/cweb.conf";
+  char *path = CWEB_DEFAULT_CONF_PATH;
+  char *logpath = NULL;
   int threads = CWEB_THREADS_DEFAULT;
   int return_value = EXIT_SUCCESS;
   int detach = 0;
@@ -93,13 +96,26 @@ int main(int argc, char **argv) {
       }
     } else if (streq(argv[i], "-d") || streq(argv[i], "--detach")) {
       detach = 1;
+    } else if (streq(argv[i], "-l") || streq(argv[i], "--logfile")) {
+      if (i == argc - 1) fprintf(stderr, "no file provided. Using default...\n");
+      else {
+	i++;
+	logpath = argv[i];
+      }
     }
   }
   cfg = httpserv_config_load(path);
   if (!cfg)
     exit(EXIT_FAILURE);
   // initalize logging system
-  httpserv_logging_init("log.txt");
+  if (!logpath) {
+    tree_node_t *lf_node = tree_get_node(cfg, "logfile");
+    if (!lf_node) logpath = CWEB_DEFAULT_LOG_PATH;
+    else {
+      logpath = lf_node->value;
+    }
+  }
+  httpserv_logging_init(logpath);
   tree_node_t *ip_node = tree_get_node(cfg, "http.ip");
   if (!ip_node) {
     httpserv_logging_err("no entry 'http.ip' in config file '%s'", path);
@@ -120,6 +136,11 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
   if (detach) {
+    /*
+     * TODO: Here we need proper daemonizing for this. This means we need
+     * double-fork (fork, setsid, fork). This is implemented by the daemon(3)
+     * function
+     */
     pid_t pid = fork();
     if (pid == -1) {
       perror("failed to fork process");
