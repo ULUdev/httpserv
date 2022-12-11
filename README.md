@@ -1,6 +1,11 @@
 # `httpserv`
 ## An http server building library written in C (this project is inspired by [`rsweb`](http://gitlab.sokoll.com/moritz/rsweb))
 
+## Introduction
+This project aims to provide a simple web server with `cweb` as well as a
+powerful abstraction library with `libhttpserv`. Everything in this server is
+meant to conform to `HTTP/1.1`
+
 ## Compilation
 ### Dependencies
 Currently there is [`libtree`](http://gitlab.sokoll.com/moritz/libtree) as a

@@ -20,13 +20,16 @@ char *httpserv_logging_get_time() {
 
 void httpserv_logging_init(const char *logfile) {
   httpserv_time_str = malloc(HTTPSERV_LOGGING_TIME_LENGTH);
-  if (logfile) httpserv_log_file = fopen(logfile, "a");
-  else httpserv_log_file = NULL;
+  if (logfile)
+    httpserv_log_file = fopen(logfile, "a");
+  else
+    httpserv_log_file = NULL;
 }
 
 void httpserv_logging_destroy() {
   free(httpserv_time_str);
-  if (httpserv_log_file) fclose(httpserv_log_file);
+  if (httpserv_log_file)
+    fclose(httpserv_log_file);
 }
 void httpserv_logging_log(const char *msg, ...) {
   va_list ap;
@@ -35,7 +38,9 @@ void httpserv_logging_log(const char *msg, ...) {
   va_start(ap, msg);
   vasprintf(&fmsg, msg, ap);
   fprintf(stderr, "[%s] %s\n", time, fmsg);
-  if (httpserv_log_file) fprintf(httpserv_log_file, "[%s] %s\n", time, fmsg);
+  if (httpserv_log_file)
+    fprintf(httpserv_log_file, "[%s] %s\n", time, fmsg);
+  va_end(ap);
   free(fmsg);
 }
 void httpserv_logging_wrn(const char *msg, ...) {
@@ -45,7 +50,9 @@ void httpserv_logging_wrn(const char *msg, ...) {
   va_start(ap, msg);
   vasprintf(&fmsg, msg, ap);
   fprintf(stderr, "[%s] Warning: %s\n", time, fmsg);
-  if (httpserv_log_file) fprintf(httpserv_log_file, "[%s] Warning: %s\n", time, fmsg);
+  if (httpserv_log_file)
+    fprintf(httpserv_log_file, "[%s] Warning: %s\n", time, fmsg);
+  va_end(ap);
   free(fmsg);
 }
 void httpserv_logging_err(const char *msg, ...) {
@@ -55,6 +62,8 @@ void httpserv_logging_err(const char *msg, ...) {
   va_start(ap, msg);
   vasprintf(&fmsg, msg, ap);
   fprintf(stderr, "[%s] Error: %s\n", time, fmsg);
-  if (httpserv_log_file) fprintf(httpserv_log_file, "[%s] Error: %s\n", time, fmsg);
+  if (httpserv_log_file)
+    fprintf(httpserv_log_file, "[%s] Error: %s\n", time, fmsg);
+  va_end(ap);
   free(fmsg);
 }

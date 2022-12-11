@@ -1,14 +1,19 @@
 #include "httpserver.h"
+#include "http/status.h"
 #include "logging.h"
 #include "threadpool.h"
+#include "http/response.h"
+#include <stddef.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
-#include <netinet/in.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <unistd.h>
+#include <math.h>
 
 struct HttpservWorkerData {
   int sockfd;
@@ -16,13 +21,43 @@ struct HttpservWorkerData {
 
 // worker function for the httpserver
 void *httpserv_httpserver_worker(void *arg) {
-  /*
-   * handle request here
-   */
   struct HttpservWorkerData *data = (struct HttpservWorkerData *)arg;
-  if (data->sockfd > 0)
-    shutdown(data->sockfd, SHUT_RDWR);
+  if (data->sockfd <= 0) {
+    free(arg);
+    return NULL;
+  }
+  /*
+   * Parse request here and implement actually looking up resources and routes
+   * etc.
+   */
+  httpserv_http_response_t *resp =
+      httpserv_http_response_new(HTTPSERV_HTTP_STATUS_OK);
+  if (!resp) {
+    httpserv_logging_err("failed to generate response object");
+  } else {
+    char *body = httpserv_http_response_default();
+    char *version = httpserv_http_server_version();
+    httpserv_http_response_set_body(resp, body, strlen(body));
+    int body_len_size = (int)log10(resp->bodylength) + 2;
+    char *body_len = malloc(body_len_size);
+    snprintf(body_len, body_len_size, "%zu", resp->bodylength);
+    httpserv_http_response_add_header(resp, "Server", version);
+    httpserv_http_response_add_header(resp, "Content-Lenght", body_len);
+    free(version);
+    free(body_len);
+    httpserv_http_response_raw_t *raw = httpserv_http_response_build(resp);
+    if (!raw) {
+      httpserv_logging_err("failed to parse response object");
+    } else {
+      // httpserv_logging_log("response: %s %d", raw->content, raw->length);
+      write(data->sockfd, raw->content, raw->length);
+      free(raw->content);
+      free(raw);
+    }
+  }
 
+  shutdown(data->sockfd, SHUT_RDWR);
+  close(data->sockfd);
   free(data);
   return NULL;
 }
@@ -36,6 +71,13 @@ httpserv_httpserver_t *httpserv_httpserver_new(const char *ipaddr,
   serv->port = port;
   serv->addr->sin_family = AF_INET;
   serv->addr->sin_addr.s_addr = inet_addr(ipaddr);
+  if (serv->addr->sin_addr.s_addr == -1) {
+    httpserv_logging_err("failed to parse ip address: %s", ipaddr);
+    free(serv->addr);
+    free(serv->ip);
+    free(serv);
+    return NULL;
+  }
   serv->addr->sin_port = htons(port);
   serv->socket = socket(AF_INET, SOCK_STREAM, 0);
   serv->tp = NULL;
@@ -44,6 +86,7 @@ httpserv_httpserver_t *httpserv_httpserver_new(const char *ipaddr,
   if (serv->socket < 0) {
     httpserv_logging_err("failed to create socket: %s", strerror(errno));
     free(serv->addr);
+    free(serv->ip);
     free(serv);
     return NULL;
   }
@@ -73,6 +116,7 @@ int httpserv_httpserver_run(httpserv_httpserver_t *server, size_t threads) {
   server->keep_alive = 1;
   server->alive = 1;
   while (server->keep_alive) {
+    // TODO: use select(3) to handle sockets "asynchronously"
     int conn = accept(server->socket, NULL, NULL);
     struct HttpservWorkerData *data = malloc(sizeof(struct HttpservWorkerData));
     data->sockfd = conn;
@@ -84,6 +128,9 @@ int httpserv_httpserver_run(httpserv_httpserver_t *server, size_t threads) {
 void httpserv_httpserver_destroy(httpserv_httpserver_t *server) {
   if (!server)
     return;
+  server->keep_alive = 0;
+  while (server->alive)
+    ;
   if (close(server->socket) == -1)
     httpserv_logging_err("failed to close socket: %s", strerror(errno));
   if (server->tp)

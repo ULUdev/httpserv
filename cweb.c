@@ -57,7 +57,8 @@ const char *CWEB_HELP_STR =
     "  -f,--file <file>: use <file> instead of the default configuration "
     "file\n"
     "  -d,--detach: fork process to the background\n"
-    " -l,--logfile <file>: log to <file>. This will overwrite any setting from the config file\n";
+    " -l,--logfile <file>: log to <file>. This will overwrite any setting from "
+    "the config file\n";
 
 int main(int argc, char **argv) {
   // signal handler
@@ -97,10 +98,11 @@ int main(int argc, char **argv) {
     } else if (streq(argv[i], "-d") || streq(argv[i], "--detach")) {
       detach = 1;
     } else if (streq(argv[i], "-l") || streq(argv[i], "--logfile")) {
-      if (i == argc - 1) fprintf(stderr, "no file provided. Using default...\n");
+      if (i == argc - 1)
+        fprintf(stderr, "no file provided. Using default...\n");
       else {
-	i++;
-	logpath = argv[i];
+        i++;
+        logpath = argv[i];
       }
     }
   }
@@ -110,7 +112,8 @@ int main(int argc, char **argv) {
   // initalize logging system
   if (!logpath) {
     tree_node_t *lf_node = tree_get_node(cfg, "logfile");
-    if (!lf_node) logpath = CWEB_DEFAULT_LOG_PATH;
+    if (!lf_node)
+      logpath = CWEB_DEFAULT_LOG_PATH;
     else {
       logpath = lf_node->value;
     }
@@ -153,6 +156,8 @@ int main(int argc, char **argv) {
     }
   }
   srv = httpserv_httpserver_new(ip, port);
+  if (!srv)
+    exit(EXIT_FAILURE);
   int result = httpserv_httpserver_run(srv, threads);
 
   if (result != 0)
