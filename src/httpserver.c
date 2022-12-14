@@ -3,6 +3,8 @@
 #include "logging.h"
 #include "threadpool.h"
 #include "http/response.h"
+#include "http/request.h"
+#include "data.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -14,6 +16,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <errno.h>
 
 struct HttpservWorkerData {
   int sockfd;
@@ -26,12 +29,49 @@ void *httpserv_httpserver_worker(void *arg) {
     free(arg);
     return NULL;
   }
-  /*
-   * Parse request here and implement actually looking up resources and routes
-   * etc.
-   */
-  httpserv_http_response_t *resp =
-      httpserv_http_response_new(HTTPSERV_HTTP_STATUS_OK);
+  httpserv_raw_data_t *rawreq = httpserv_raw_data_init();
+  rawreq->content = malloc(1);
+  rawreq->content[0] = '\0';
+  char c = '\0';
+  while (1) {
+    read(data->sockfd, &c, 1);
+    rawreq->content = realloc(rawreq->content, rawreq->len + 2);
+    strncat(rawreq->content, &c, 1);
+    if (rawreq->len >= 4 && rawreq->content[rawreq->len] == '\n' &&
+        rawreq->content[rawreq->len - 1] == '\r' &&
+        rawreq->content[rawreq->len - 2] == '\n' &&
+        rawreq->content[rawreq->len - 3] == '\r') {
+      rawreq->len++;
+      break;
+    }
+    rawreq->len++;
+  }
+  httpserv_http_request_t *req = httpserv_http_request_from_raw(rawreq);
+  if (req) {
+    char *header = httpserv_http_request_get_header(req, "Content-Length");
+    if (header) {
+      size_t clen = (size_t)strtol(header, NULL, 10);
+      if (!clen) {
+        httpserv_logging_err("failed to convert number: %s", strerror(errno));
+	shutdown(data->sockfd, SHUT_RDWR);
+	close(data->sockfd);
+        return NULL;
+      }
+      char *content = malloc(clen);
+      if (read(data->sockfd, content, clen) > 0) {
+	httpserv_http_request_set_body(req, content, clen);
+      }
+    }
+  }
+  httpserv_http_status_t status = HTTPSERV_HTTP_STATUS_OK;
+  if (!req) {
+    status = HTTPSERV_HTTP_STATUS_BAD_REQUEST;
+    httpserv_logging_log("bad request");
+  } else {
+    httpserv_logging_log("request: %s %s", httpserv_http_strmethod(req->method),
+                         req->path);
+  }
+  httpserv_http_response_t *resp = httpserv_http_response_new(status);
   if (!resp) {
     httpserv_logging_err("failed to generate response object");
   } else {

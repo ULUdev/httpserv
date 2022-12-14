@@ -141,17 +141,22 @@ int main(int argc, char **argv) {
   if (detach) {
     /*
      * TODO: Here we need proper daemonizing for this. This means we need
-     * double-fork (fork, setsid, fork). This is implemented by the daemon(3)
+     * double-fork (fork, fork, setsid). This is implemented by the daemon(3)
      * function
      */
-    pid_t pid = fork();
-    if (pid == -1) {
-      perror("failed to fork process");
-      return_value = EXIT_FAILURE;
-      return return_value;
-    } else if (pid > 0) {
-      printf("%d\n", pid);
-      cweb_cleanup();
+    if (fork() == 0) {
+      pid_t pid = fork();
+      if (pid == -1) {
+        perror("failed to fork process");
+        return_value = EXIT_FAILURE;
+        return return_value;
+      } else if (pid > 0) {
+        printf("%d\n", pid);
+        cweb_cleanup();
+        return return_value;
+      }
+      
+    } else {
       return return_value;
     }
   }
