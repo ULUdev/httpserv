@@ -1,5 +1,6 @@
 # `httpserv`
 ## An http server building library written in C (this project is inspired by [`rsweb`](http://gitlab.sokoll.com/moritz/rsweb))
+[![pipeline status](https://gitlab.sokoll.com/moritz/httpserv/badges/main/pipeline.svg)](https://gitlab.sokoll.com/moritz/httpserv/-/commits/main) 
 
 ## Introduction
 This project aims to provide a simple web server with `cweb` as well as a

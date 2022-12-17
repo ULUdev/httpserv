@@ -2,6 +2,7 @@
 #define __HTTPSERV_HTTP_RESPONSE_H__
 #include <stdlib.h>
 #include "http/status.h"
+#include "data.h"
 
 typedef struct {
   httpserv_http_status_t status;
@@ -16,11 +17,6 @@ typedef struct {
  * A simple struct containing the raw content of some response, that is to be
  * sent over the network and its length
  */
-typedef struct {
-  char *content;
-  size_t length;
-} httpserv_http_response_raw_t;
-
 httpserv_http_response_t *
 httpserv_http_response_new(const httpserv_http_status_t status);
 void httpserv_http_response_add_header(httpserv_http_response_t *response,
@@ -38,7 +34,8 @@ int httpserv_http_response_set_body(httpserv_http_response_t *response,
  * The returned object must be deallocated by calling free(). Additionally the
  * content member must be deallocated aswell
  */
-httpserv_http_response_raw_t *
+
+httpserv_raw_data_t *
 httpserv_http_response_build(httpserv_http_response_t *response);
 
 void httpserv_http_response_destroy(httpserv_http_response_t *response);

@@ -32,13 +32,15 @@ typedef struct {
 httpserv_http_request_t *
 httpserv_http_request_new(const httpserv_http_method_t method,
                           const char *path);
-httpserv_http_request_t *httpserv_http_request_from_raw(httpserv_raw_data_t *raw);
+httpserv_http_request_t *
+httpserv_http_request_from_raw(httpserv_raw_data_t *raw);
 void httpserv_http_request_set_body(httpserv_http_request_t *req,
                                     const char *body, size_t len);
 void httpserv_http_request_add_header(httpserv_http_request_t *req,
                                       const char *key, const char *value);
 void httpserv_http_request_destroy(httpserv_http_request_t *req);
-char *httpserv_http_request_get_header(const httpserv_http_request_t *req, const char *key);
+char *httpserv_http_request_get_header(const httpserv_http_request_t *req,
+                                       const char *key);
 
 httpserv_raw_data_t *
 httpserv_http_request_build(const httpserv_http_request_t *req);

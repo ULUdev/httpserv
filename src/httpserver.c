@@ -53,13 +53,13 @@ void *httpserv_httpserver_worker(void *arg) {
       size_t clen = (size_t)strtol(header, NULL, 10);
       if (!clen) {
         httpserv_logging_err("failed to convert number: %s", strerror(errno));
-	shutdown(data->sockfd, SHUT_RDWR);
-	close(data->sockfd);
+        shutdown(data->sockfd, SHUT_RDWR);
+        close(data->sockfd);
         return NULL;
       }
       char *content = malloc(clen);
       if (read(data->sockfd, content, clen) > 0) {
-	httpserv_http_request_set_body(req, content, clen);
+        httpserv_http_request_set_body(req, content, clen);
       }
     }
   }
@@ -85,12 +85,12 @@ void *httpserv_httpserver_worker(void *arg) {
     httpserv_http_response_add_header(resp, "Content-Lenght", body_len);
     free(version);
     free(body_len);
-    httpserv_http_response_raw_t *raw = httpserv_http_response_build(resp);
+    httpserv_raw_data_t *raw = httpserv_http_response_build(resp);
     if (!raw) {
       httpserv_logging_err("failed to parse response object");
     } else {
       // httpserv_logging_log("response: %s %d", raw->content, raw->length);
-      write(data->sockfd, raw->content, raw->length);
+      write(data->sockfd, raw->content, raw->len);
       free(raw->content);
       free(raw);
     }

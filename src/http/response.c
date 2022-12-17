@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "http/status.h"
+#include "data.h"
 
 httpserv_http_response_t *
 httpserv_http_response_new(const httpserv_http_status_t status) {
@@ -43,12 +44,11 @@ int httpserv_http_response_set_body(httpserv_http_response_t *response,
   response->lenght += response->bodylength;
   return 0;
 }
-httpserv_http_response_raw_t *
+httpserv_raw_data_t *
 httpserv_http_response_build(httpserv_http_response_t *response) {
   if (!httpserv_http_status_valid(response->status))
     return NULL;
-  httpserv_http_response_raw_t *rawresp =
-      malloc(sizeof(httpserv_http_response_raw_t));
+  httpserv_raw_data_t *rawresp = malloc(sizeof(httpserv_raw_data_t));
   char status[4];
   snprintf(status, 4, "%d ", response->status);
   rawresp->content = malloc(response->lenght);
@@ -76,7 +76,7 @@ httpserv_http_response_build(httpserv_http_response_t *response) {
   // TODO: You can't really use strncat as it will search for null-termination
   // which might not exist
   strncat(rawresp->content, response->body, response->bodylength);
-  rawresp->length = response->lenght;
+  rawresp->len = response->lenght;
   return rawresp;
 }
 
