@@ -30,7 +30,7 @@ clean:
 format:
 	clang-format -i $(SRC) $(wildcard test/*.c) $(wildcard include/*.h) $(wildcard include/**/*.h) cweb.c
 
-tests: libtree.a libhttpserv.so test/mock
+tests: libtree.a libhttpserv.a test/mock
 	LD_LIBRARY_PATH="$$LD_LIBRARY_PATH:$$PWD" ./test/mock
 
 install: cweb libhttpserv.so
