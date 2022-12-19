@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -I../include -Iinclude -I../libtree/include -ggdb
+CFLAGS = -std=c11 -Wall -I../include -I../libtree/include -ggdb
 LDFLAGS = -L.. -lcmocka -lpthread -ltree -l:libhttpserv.a -lm
 SRC = $(wildcard *.c) $(wildcard **/*.c)
 
