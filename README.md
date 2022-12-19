@@ -19,7 +19,14 @@ need to have `cmocka` installed.
 4. `make`
 
 This will build `libhttpserv.so` and `cweb`. For the flags you can use with
-`./configure.sh` run `./configure.sh -h`
+`./configure.sh` run `./configure.sh -h`.
 ### Testing
 For testing you need to have `cmocka` installed. If you have it installed you
 can run `make tests` and it will run through the tests.
+
+## Usage
+### `cweb`
+
+### `libhttpserv`
+The library is built as both a shared library as well as a static library. You
+can use either of those. `libtree` is currently used as a static library.

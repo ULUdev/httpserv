@@ -1,8 +1,8 @@
 CC = gcc
 LD = ld
 AR = ar
-CFLAGS = -fPIC -c -std=c11 -Wall -Iinclude -Ilibtree/include -O3
-LDFLAGS = -shared -L -ltree -lpthread -lm
+CFLAGS = -std=c11 -Wall -Iinclude -Ilibtree/include -ggdb
+LDFLAGS = -L. -ltree -lpthread -lm
 SRC = $(wildcard src/**/*.c) $(wildcard src/*.c)
 PREFIX = /usr/local
 
@@ -13,16 +13,16 @@ libtree.a:
 	cp libtree/libtree.a .
 
 cweb: cweb.c libhttpserv.so
-	$(CC) cweb.c -std=c11 -Wall -O3 -Iinclude -Ilibtree/include -L. -lpthread -ltree -lhttpserv -lm -o cweb
+	$(CC) cweb.c $(CFLAGS) $(LDFLAGS) -lhttpserv -o $@
 
 libhttpserv.so: $(SRC:.c=.o)
-	$(LD) $^ $(LDFLAGS) -o $@
+	$(LD) $^ -shared $(LDFLAGS) -o $@
 
 libhttpserv.a: $(SRC:.c=.o)
 	$(AR) -crs $@ $^
 
 %.o: %.c
-	$(CC) $^ $(CFLAGS) -o $@
+	$(CC) $^ -fPIC -c $(CFLAGS) -o $@
 
 clean:
 	rm -rf libhttpserv.so test/mock $(SRC:.c=.o) cweb libtree.a libhttpserv.a

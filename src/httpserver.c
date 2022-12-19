@@ -1,3 +1,4 @@
+#include "httpserv.h"
 #include "httpserver.h"
 #include "http/status.h"
 #include "logging.h"
@@ -5,6 +6,7 @@
 #include "http/response.h"
 #include "http/request.h"
 #include "data.h"
+#include "bufferpool.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -16,10 +18,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
-#include <errno.h>
 
 struct HttpservWorkerData {
   int sockfd;
+  httpserv_bufferpool_t *bpool;
 };
 
 // worker function for the httpserver
@@ -147,6 +149,9 @@ httpserv_httpserver_t *httpserv_httpserver_new(const char *ipaddr,
 int httpserv_httpserver_run(httpserv_httpserver_t *server, size_t threads) {
   httpserv_logging_log("starting server...");
   server->tp = threadpool_new(threads);
+  httpserv_bufferpool_t *bpool = httpserv_bufferpool_new(
+      HTTPSERV_BUFFERPOOL_BUFSIZ, HTTPSERV_BUFFERPOOL_DEFAULT_BUFFERS,
+      HTTPSERV_BUFFER_FLAGS_CRLINK | HTTPSERV_BUFFER_FLAGS_LINK);
   if (listen(server->socket, 0) == -1) {
     httpserv_logging_err("failed to listen on socket: %s", strerror(errno));
     return -1;
@@ -160,6 +165,7 @@ int httpserv_httpserver_run(httpserv_httpserver_t *server, size_t threads) {
     int conn = accept(server->socket, NULL, NULL);
     struct HttpservWorkerData *data = malloc(sizeof(struct HttpservWorkerData));
     data->sockfd = conn;
+    data->bpool = bpool;
     threadpool_add_work(server->tp, httpserv_httpserver_worker, data);
   }
   server->alive = 0;

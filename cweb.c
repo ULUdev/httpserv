@@ -57,7 +57,7 @@ const char *CWEB_HELP_STR =
     "  -f,--file <file>: use <file> instead of the default configuration "
     "file\n"
     "  -d,--detach: fork process to the background\n"
-    " -l,--logfile <file>: log to <file>. This will overwrite any setting from "
+    "  -l,--logfile <file>: log to <file>. This will overwrite any setting from "
     "the config file\n";
 
 int main(int argc, char **argv) {
