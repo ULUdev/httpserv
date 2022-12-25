@@ -103,23 +103,41 @@ void *httpserv_httpserver_worker(void *arg) {
 }
 
 httpserv_httpserver_t *httpserv_httpserver_new(const char *ipaddr,
-                                               const uint16_t port) {
+                                               const uint16_t port, const httpserv_httpserver_addr_kind_t akind) {
   httpserv_httpserver_t *serv = malloc(sizeof(httpserv_httpserver_t));
-  serv->addr = malloc(sizeof(struct sockaddr_in));
+  serv->addr = malloc(sizeof(httpserv_httpserver_addr_t));
   serv->ip = malloc(strlen(ipaddr) + 1);
   strcpy(serv->ip, ipaddr);
   serv->port = port;
-  serv->addr->sin_family = AF_INET;
-  serv->addr->sin_addr.s_addr = inet_addr(ipaddr);
-  if (serv->addr->sin_addr.s_addr == -1) {
-    httpserv_logging_err("failed to parse ip address: %s", ipaddr);
-    free(serv->addr);
-    free(serv->ip);
-    free(serv);
-    return NULL;
+  serv->akind = akind;
+  serv->socket = -1;
+  switch (akind) {
+  case HTTPSERV_HTTPSERVER_ADDR_KIND_IPv4:
+    serv->addr->v4.sin_family = AF_INET;
+    serv->addr->v4.sin_addr.s_addr = inet_addr(ipaddr);
+    if (inet_pton(AF_INET, ipaddr, &serv->addr->v4.sin_addr) != 1) {
+      httpserv_logging_err("failed to parse ip address: %s", ipaddr);
+      free(serv->addr);
+      free(serv->ip);
+      free(serv);
+      return NULL;
+    }
+    serv->addr->v4.sin_port = htons(port);
+    serv->socket = socket(AF_INET, SOCK_STREAM, 0);
+    break;
+  case HTTPSERV_HTTPSERVER_ADDR_KIND_IPv6:
+    serv->addr->v6.sin6_family = AF_INET6;
+    if (inet_pton(AF_INET6, ipaddr, &serv->addr->v6.sin6_addr) != 1) {
+      httpserv_logging_err("failed to parse ip address: %s", ipaddr);
+      free(serv->addr);
+      free(serv->ip);
+      free(serv);
+      return NULL;
+    }
+    serv->addr->v6.sin6_port = htons(port);
+    serv->socket = socket(AF_INET6, SOCK_STREAM, 0);
+    break;
   }
-  serv->addr->sin_port = htons(port);
-  serv->socket = socket(AF_INET, SOCK_STREAM, 0);
   serv->tp = NULL;
   serv->alive = 0;
   serv->keep_alive = 0;

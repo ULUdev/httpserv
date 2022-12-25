@@ -1,7 +1,7 @@
 #include "threadpool.h"
 #include "job.h"
 #include "logging.h"
-#include "test_threadpool.h"
+#include "include/test_threadpool.h"
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>
