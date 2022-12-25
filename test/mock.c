@@ -17,11 +17,11 @@ int main(void) {
    * TODO: include more testing for the HTTP functions of libhttpserv
    */
   const struct CMUnitTest tests[] = {
-      cmocka_unit_test(tp_create),     cmocka_unit_test(tp_add_job),
-      cmocka_unit_test(serv_create_v4),   cmocka_unit_test(streq),
-      cmocka_unit_test(strstriplw),    cmocka_unit_test(strstriptw),
-      cmocka_unit_test(strstripltw),   cmocka_unit_test(config_load),
-      cmocka_unit_test(method_to_str), cmocka_unit_test(str_to_method),
+      cmocka_unit_test(tp_create),      cmocka_unit_test(tp_add_job),
+      cmocka_unit_test(serv_create_v4), cmocka_unit_test(streq),
+      cmocka_unit_test(strstriplw),     cmocka_unit_test(strstriptw),
+      cmocka_unit_test(strstripltw),    cmocka_unit_test(config_load),
+      cmocka_unit_test(method_to_str),  cmocka_unit_test(str_to_method),
       cmocka_unit_test(serv_create_v6),
   };
 #ifdef TEST_ENV_DOCKER

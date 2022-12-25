@@ -14,7 +14,9 @@ typedef struct {
   char *privkey;
 } httpserv_ssl_t;
 
-httpserv_ssl_t *httpserv_ssl_init(const char *privkeyfile, const char *certchainsfile);
+httpserv_ssl_t *httpserv_ssl_init(const char *privkeyfile,
+                                  const char *certchainsfile);
+httpserv_ssl_t *httpserv_ssl_init_conn(SSL_CTX *ctx, const int fd);
 void httpserv_ssl_destroy(httpserv_ssl_t *ssl);
 
 #endif

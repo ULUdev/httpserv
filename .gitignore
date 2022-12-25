@@ -8,3 +8,4 @@ cweb
 *.a
 *.log
 *.core
+*.pem

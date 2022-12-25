@@ -20,7 +20,19 @@ void httpserv_net_connector_read(httpserv_net_connector_t *conn,
 void httpserv_net_connector_write(httpserv_net_connector_t *conn,
                                   const httpserv_net_connector_kind_t kind,
                                   void *buffer, const size_t bytes);
+int httpserv_net_connector_get_fd(httpserv_net_connector_t *conn,
+                                  const httpserv_net_connector_kind_t ckind);
+/*
+ * Destroy a connector and everything accociated with it.
+ */
 void httpserv_net_connector_destroy(httpserv_net_connector_t *conn,
                                     const httpserv_net_connector_kind_t kind);
+/*
+ * Destroy a connector, but only the parts that are accociated with a
+ * connection. This is used within the server to ensure that the
+ * `conn->ssl_conn->ssl_ctx` can be reused. It will also ignore everything else.
+ */
+void httpserv_net_connector_destroy_connection(
+    httpserv_net_connector_t *conn, const httpserv_net_connector_kind_t ckind);
 
 #endif

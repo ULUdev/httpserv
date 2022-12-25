@@ -2,7 +2,7 @@ image: gcc
 
 before_script:
   - apt-get update
-  - apt-get install libcmocka-dev -y
+  - apt-get install libcmocka-dev pkg-config libssl-dev -y
   - ./configure.sh -d -e TEST_ENV_DOCKER
 
 variables:

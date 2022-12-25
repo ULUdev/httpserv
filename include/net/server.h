@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include "threadpool.h"
+#include "net/connector.h"
 
 /*
  * Enum representing an address kind (IPv4 or IPv6)
@@ -23,7 +24,8 @@ typedef union {
 } httpserv_httpserver_addr_t;
 
 typedef struct {
-  int socket;
+  httpserv_net_connector_t *conn;
+  httpserv_net_connector_kind_t ckind;
   httpserv_httpserver_addr_t *addr;
   httpserv_httpserver_addr_kind_t akind;
   threadpool_t *tp;
@@ -37,8 +39,11 @@ typedef struct {
  * This function creates a new server and already creates the socket used for
  * the connection and binds said socket
  */
-httpserv_httpserver_t *httpserv_httpserver_new(const char *ipaddr,
-                                               const uint16_t port, const httpserv_httpserver_addr_kind_t akind);
+httpserv_httpserver_t *
+httpserv_httpserver_new(const char *ipaddr, const uint16_t port,
+                        const httpserv_httpserver_addr_kind_t akind);
+void httpserv_httpserver_use_ssl(httpserv_httpserver_t *srv,
+                                 const char *privkeyfile, const char *certfile);
 /*
  * Run a server. This function returns 0 if the server ran successful
  */
