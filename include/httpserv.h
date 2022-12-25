@@ -4,7 +4,7 @@
 #include "job.h"
 #include "config.h"
 #include "logging.h"
-#include "httpserver.h"
+#include "net/server.h"
 
 // version macros
 #define HTTPSERV_VERSION_MAJOR 0

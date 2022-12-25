@@ -4,7 +4,7 @@
 #include "threadpool.h"
 #include "stringh.h"
 #include "tree.h"
-#include "httpserver.h"
+#include "net/server.h"
 #include "httpserv.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,7 +132,8 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
   httpserv_httpserver_addr_kind_t akind = HTTPSERV_HTTPSERVER_ADDR_KIND_IPv4;
-  if (tree_get_node(cfg, "http.v6")) akind = HTTPSERV_HTTPSERVER_ADDR_KIND_IPv6;
+  if (tree_get_node(cfg, "http.v6"))
+    akind = HTTPSERV_HTTPSERVER_ADDR_KIND_IPv6;
   char *ip = ip_node->value;
   int port = strtol(port_node->value, NULL, 10);
   if (!port) {
@@ -163,6 +164,18 @@ int main(int argc, char **argv) {
     }
   }
   srv = httpserv_httpserver_new(ip, port, akind);
+  tree_node_t *ssl_node = tree_get_node(cfg, "ssl");
+  if (ssl_node) {
+    tree_node_t *certfile_node = tree_get_node(cfg, "ssl.certfile");
+    tree_node_t *privkeyfile_node = tree_get_node(cfg, "ssl.privkeyfile");
+    if (!certfile_node || !privkeyfile_node) {
+      httpserv_logging_err("SSL won't be enabled because either `ssl.certfile` "
+                           "or `ssl.privkeyfile` are missing");
+    } else {
+      httpserv_httpserver_use_ssl(srv, privkeyfile_node->value,
+                                  certfile_node->value);
+    }
+  }
   if (!srv)
     exit(EXIT_FAILURE);
   int result = httpserv_httpserver_run(srv, threads);
