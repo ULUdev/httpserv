@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -I../include -I../libtree/include -ggdb
+ENV = TEST_ENV_NORMAL
+CFLAGS = -D$(ENV) -std=c11 -Wall -I../include -I../libtree/include -ggdb
 LDFLAGS = -L.. -lcmocka -lpthread -ltree -l:libhttpserv.a -lm
 SRC = $(wildcard *.c) $(wildcard **/*.c)
 

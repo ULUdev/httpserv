@@ -23,6 +23,9 @@ int main(void) {
       cmocka_unit_test(strstripltw),   cmocka_unit_test(config_load),
       cmocka_unit_test(method_to_str), cmocka_unit_test(serv_create_v6),
   };
+#ifdef TEST_ENV_DOCKER
+  cmocka_set_skip_filter("*v6*");
+#endif
 
   int res = cmocka_run_group_tests(tests, NULL, NULL);
   httpserv_logging_destroy();
