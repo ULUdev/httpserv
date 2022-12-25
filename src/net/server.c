@@ -8,6 +8,7 @@
 #include "http/request.h"
 #include "data.h"
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -35,7 +36,8 @@ void *httpserv_httpserver_worker(void *arg) {
   }
   if (data->ckind == HTTPSERV_NET_CONNECTOR_SSL) {
     if (SSL_accept(data->conn->ssl_conn->ssl) == -1) {
-      httpserv_logging_err("SSL handshake failed");
+      httpserv_logging_err("SSL handshake failed: %s",
+                           ERR_error_string(ERR_get_error(), NULL));
       free(data);
       return NULL;
     }
@@ -212,8 +214,10 @@ int httpserv_httpserver_run(httpserv_httpserver_t *server, size_t threads) {
     }
     data->conn = conn;
     data->ckind = server->ckind;
-    if (server->keep_alive) threadpool_add_work(server->tp, httpserv_httpserver_worker, data);
-    else httpserv_net_connector_destroy_connection(conn, server->ckind);
+    if (server->keep_alive)
+      threadpool_add_work(server->tp, httpserv_httpserver_worker, data);
+    else
+      httpserv_net_connector_destroy_connection(conn, server->ckind);
   }
   server->alive = 0;
   return 0;
