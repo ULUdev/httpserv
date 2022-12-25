@@ -21,6 +21,7 @@ OPTIONS
   -t: run the tests
   -r: toggle release mode
   -d: toggle debug mode
+  -e <env>: set the compile environment to <env>
 " >&2
 }
 
@@ -38,9 +39,13 @@ run_tests() {
     make tests -Bk
 }
 
+set_comp_env() {
+    sed -i "s/^ENV = .*\$/ENV = $OPTARG/" test/Makefile
+}
+
 main() {
     local opts
-    while getopts "hp:trd" opts; do
+    while getopts "hp:trde:" opts; do
         case $opts in
             h)
                 print_help
@@ -57,6 +62,9 @@ main() {
                 ;;
             d)
                 prepare_debug
+                ;;
+            e)
+                set_comp_env "$OPTARG"
                 ;;
         esac
     done

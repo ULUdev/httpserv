@@ -1,7 +1,7 @@
 #include "config.h"
 #include "node.h"
 #include "tree.h"
-#include "test_config.h"
+#include "include/test_config.h"
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stddef.h>

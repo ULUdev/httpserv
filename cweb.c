@@ -131,6 +131,8 @@ int main(int argc, char **argv) {
     cweb_cleanup();
     exit(EXIT_FAILURE);
   }
+  httpserv_httpserver_addr_kind_t akind = HTTPSERV_HTTPSERVER_ADDR_KIND_IPv4;
+  if (tree_get_node(cfg, "http.v6")) akind = HTTPSERV_HTTPSERVER_ADDR_KIND_IPv6;
   char *ip = ip_node->value;
   int port = strtol(port_node->value, NULL, 10);
   if (!port) {
@@ -160,7 +162,7 @@ int main(int argc, char **argv) {
       return return_value;
     }
   }
-  srv = httpserv_httpserver_new(ip, port);
+  srv = httpserv_httpserver_new(ip, port, akind);
   if (!srv)
     exit(EXIT_FAILURE);
   int result = httpserv_httpserver_run(srv, threads);
