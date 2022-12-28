@@ -6,6 +6,8 @@
 #include "tree.h"
 #include "net/server.h"
 #include "httpserv.h"
+#include "resource.h"
+#include "router.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -164,6 +166,11 @@ int main(int argc, char **argv) {
     }
   }
   srv = httpserv_httpserver_new(ip, port, akind);
+  // TODO: read routes from file
+  httpserv_httpserver_add_router(srv, httpserv_router_new());
+  // TODO: read root from config
+  httpserv_httpserver_add_resource_loader(srv,
+                                          httpserv_resource_loader_new("."));
   tree_node_t *ssl_node = tree_get_node(cfg, "ssl");
   if (ssl_node) {
     tree_node_t *certfile_node = tree_get_node(cfg, "ssl.certfile");

@@ -7,6 +7,8 @@
 #include "http/response.h"
 #include "http/request.h"
 #include "data.h"
+#include "router.h"
+#include "resource.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <stddef.h>
@@ -25,6 +27,8 @@
 struct HttpservWorkerData {
   httpserv_net_connector_t *conn;
   httpserv_net_connector_kind_t ckind;
+  httpserv_router_t *router;
+  httpserv_resource_loader_t *resload;
 };
 
 // worker function for the httpserver
@@ -36,8 +40,9 @@ void *httpserv_httpserver_worker(void *arg) {
   }
   if (data->ckind == HTTPSERV_NET_CONNECTOR_SSL) {
     if (SSL_accept(data->conn->ssl_conn->ssl) == -1) {
-      httpserv_logging_err("SSL handshake failed: %s",
-                           ERR_error_string(ERR_get_error(), NULL));
+      httpserv_logging_err(
+          "SSL handshake failed: %s",
+          ERR_error_string(SSL_get_error(data->conn->ssl_conn->ssl, -1), NULL));
       free(data);
       return NULL;
     }
@@ -86,23 +91,58 @@ void *httpserv_httpserver_worker(void *arg) {
   if (!resp) {
     httpserv_logging_err("failed to generate response object");
   } else {
-    char *body = httpserv_http_response_default();
+    char *path = NULL;
+    httpserv_route_t *route = httpserv_router_lookup(data->router, path);
+    if (route) {
+      switch (route->kind) {
+      case HTTPSERV_ROUTE_KIND_ALIAS:
+        path = route->routepattern;
+        break;
+      case HTTPSERV_ROUTE_KIND_REDIRECT:
+        resp->status = HTTPSERV_HTTP_STATUS_MOVED_PERMANENTLY;
+        break;
+      case HTTPSERV_ROUTE_KIND_ROUTE:
+        resp->status = HTTPSERV_HTTP_STATUS_FOUND;
+        break;
+      }
+    } else {
+      path = req->path;
+    }
+    httpserv_resource_t *res = NULL;
+    if ((route && route->kind == HTTPSERV_ROUTE_KIND_ALIAS) || path) {
+      res = httpserv_resource_loader_load(data->resload, path);
+      if (!res) {
+        resp->status = HTTPSERV_HTTP_STATUS_NOT_FOUND;
+        char *body = httpserv_http_response_default();
+        int body_len_size = (int)log10(strlen(body)) + 2;
+        char *body_len = malloc(body_len_size);
+        httpserv_http_response_set_body(resp, body, strlen(body));
+        httpserv_http_response_add_header(resp, "Content-Length", body_len);
+        // free(body);
+        free(body_len);
+      } else {
+        int body_len_size = (int)log10(res->size) + 2;
+        char *body_len = malloc(body_len_size);
+        snprintf(body_len, body_len_size, "%zu", res->size);
+        httpserv_http_response_add_header(resp, "Content-Lenght", body_len);
+        free(body_len);
+      }
+    } else {
+      httpserv_http_response_add_header(resp, "Location", route->routepattern);
+    }
     char *version = httpserv_http_server_version();
-    httpserv_http_response_set_body(resp, body, strlen(body));
-    int body_len_size = (int)log10(resp->bodylength) + 2;
-    char *body_len = malloc(body_len_size);
-    snprintf(body_len, body_len_size, "%zu", resp->bodylength);
     httpserv_http_response_add_header(resp, "Server", version);
-    httpserv_http_response_add_header(resp, "Content-Lenght", body_len);
     free(version);
-    free(body_len);
     httpserv_raw_data_t *raw = httpserv_http_response_build(resp);
     if (!raw) {
       httpserv_logging_err("failed to parse response object");
     } else {
-      // httpserv_logging_log("response: %s %d", raw->content, raw->length);
+      // write the headers
       httpserv_net_connector_write(data->conn, data->ckind, raw->content,
                                    raw->len);
+      if (res) {
+        httpserv_resource_write_to_conn(res, data->conn, data->ckind);
+      }
       free(raw->content);
       free(raw);
     }
@@ -124,6 +164,8 @@ httpserv_httpserver_new(const char *ipaddr, const uint16_t port,
   serv->akind = akind;
   serv->conn = httpserv_net_connector_init();
   serv->ckind = HTTPSERV_NET_CONNECTOR_SCK;
+  serv->resload = NULL;
+  serv->router = NULL;
   switch (akind) {
   case HTTPSERV_HTTPSERVER_ADDR_KIND_IPv4:
     serv->addr->v4.sin_family = AF_INET;
@@ -180,6 +222,18 @@ void httpserv_httpserver_use_ssl(httpserv_httpserver_t *srv,
   srv->conn->ssl_conn = httpserv_ssl_init(privkeyfile, certfile);
   SSL_set_fd(srv->conn->ssl_conn->ssl, fd);
 }
+void httpserv_httpserver_add_router(httpserv_httpserver_t *srv,
+                                    httpserv_router_t *router) {
+  if (!srv)
+    return;
+  srv->router = router;
+}
+void httpserv_httpserver_add_resource_loader(
+    httpserv_httpserver_t *srv, httpserv_resource_loader_t *resload) {
+  if (!srv)
+    return;
+  srv->resload = resload;
+}
 
 /*
  * returns 0 if the server ran successfully and -1 if an error was encountered.
@@ -214,6 +268,8 @@ int httpserv_httpserver_run(httpserv_httpserver_t *server, size_t threads) {
     }
     data->conn = conn;
     data->ckind = server->ckind;
+    data->router = server->router;
+    data->resload = server->resload;
     if (server->keep_alive)
       threadpool_add_work(server->tp, httpserv_httpserver_worker, data);
     else

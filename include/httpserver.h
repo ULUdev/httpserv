@@ -37,8 +37,9 @@ typedef struct {
  * This function creates a new server and already creates the socket used for
  * the connection and binds said socket
  */
-httpserv_httpserver_t *httpserv_httpserver_new(const char *ipaddr,
-                                               const uint16_t port, const httpserv_httpserver_addr_kind_t akind);
+httpserv_httpserver_t *
+httpserv_httpserver_new(const char *ipaddr, const uint16_t port,
+                        const httpserv_httpserver_addr_kind_t akind);
 /*
  * Run a server. This function returns 0 if the server ran successful
  */

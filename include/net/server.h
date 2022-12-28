@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include "threadpool.h"
 #include "net/connector.h"
+#include "router.h"
+#include "resource.h"
 
 /*
  * Enum representing an address kind (IPv4 or IPv6)
@@ -33,6 +35,8 @@ typedef struct {
   int keep_alive;
   char *ip;
   in_port_t port;
+  httpserv_router_t *router;
+  httpserv_resource_loader_t *resload;
 } httpserv_httpserver_t;
 
 /*
@@ -44,6 +48,10 @@ httpserv_httpserver_new(const char *ipaddr, const uint16_t port,
                         const httpserv_httpserver_addr_kind_t akind);
 void httpserv_httpserver_use_ssl(httpserv_httpserver_t *srv,
                                  const char *privkeyfile, const char *certfile);
+void httpserv_httpserver_add_router(httpserv_httpserver_t *srv,
+                                    httpserv_router_t *router);
+void httpserv_httpserver_add_resource_loader(
+    httpserv_httpserver_t *srv, httpserv_resource_loader_t *resload);
 /*
  * Run a server. This function returns 0 if the server ran successful
  */
