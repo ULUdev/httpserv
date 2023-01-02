@@ -3,6 +3,7 @@
 #include "logging.h"
 #include "net/connector.h"
 #include "net/ssl.h"
+#include "stringh.h"
 #include "threadpool.h"
 #include "http/response.h"
 #include "http/request.h"
@@ -92,7 +93,7 @@ void *httpserv_httpserver_worker(void *arg) {
     httpserv_logging_err("failed to generate response object");
   } else {
     char *path = NULL;
-    httpserv_route_t *route = httpserv_router_lookup(data->router, path);
+    httpserv_route_t *route = httpserv_router_lookup(data->router, req->path);
     if (route) {
       switch (route->kind) {
       case HTTPSERV_ROUTE_KIND_ALIAS:
@@ -241,7 +242,14 @@ void httpserv_httpserver_add_resource_loader(
  * manually
  */
 int httpserv_httpserver_run(httpserv_httpserver_t *server, size_t threads) {
-  httpserv_logging_log("starting server...");
+  switch (server->ckind) {
+  case HTTPSERV_NET_CONNECTOR_SCK:
+    httpserv_logging_log("starting server...");
+    break;
+  case HTTPSERV_NET_CONNECTOR_SSL:
+    httpserv_logging_log("starting server (SSL enabled)...");
+    break;
+  }
   server->tp = threadpool_new(threads);
   int srvfd = httpserv_net_connector_get_fd(server->conn, server->ckind);
   if (listen(srvfd, 0) == -1) {

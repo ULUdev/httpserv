@@ -1,7 +1,7 @@
 #ifndef __HTTPSERV_ROUTER_H__
 #define __HTTPSERV_ROUTER_H__
-#include <bits/pthreadtypes.h>
 #include <pthread.h>
+#include <regex.h>
 
 /*
  * An enum defining the different kinds of routes supported
@@ -20,7 +20,7 @@ typedef enum {
 } httpserv_route_kind_t;
 
 typedef struct HttpservRoute {
-  char *pattern;
+  regex_t pattern;
   char *routepattern;
   httpserv_route_kind_t kind;
   struct HttpservRoute *next;
@@ -32,6 +32,7 @@ typedef struct {
 } httpserv_router_t;
 
 httpserv_router_t *httpserv_router_new();
+httpserv_router_t *httpserv_router_parse_from_file(const char *path);
 void httpserv_router_add_route(httpserv_router_t *router,
                                httpserv_route_t *route);
 httpserv_route_t *httpserv_router_lookup(httpserv_router_t *router,

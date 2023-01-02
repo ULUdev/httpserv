@@ -21,6 +21,7 @@
 #define CWEB_VERSION_PATCH 0
 #define CWEB_THREADS_DEFAULT 10
 #define CWEB_DEFAULT_CONF_PATH "/etc/cweb/cweb.conf"
+#define CWEB_DEFAULT_ROUTE_PATH "/etc/cweb/routes.conf"
 #define CWEB_DEFAULT_LOG_PATH "/var/log/cweb/cweb.log"
 
 // globals
@@ -59,8 +60,9 @@ const char *CWEB_HELP_STR =
     "  -f,--file <file>: use <file> instead of the default configuration "
     "file\n"
     "  -d,--detach: fork process to the background\n"
-    " -l,--logfile <file>: log to <file>. This will overwrite any setting from "
-    "the config file\n";
+    "  -l,--logfile <file>: log to <file>. This will overwrite any setting from "
+    "the config file\n"
+    "  -r, --routefile <file>: use <file> as the router config file\n";
 
 int main(int argc, char **argv) {
   // signal handler
@@ -71,6 +73,7 @@ int main(int argc, char **argv) {
   signal(SIGINT, &handle_sigint);
 
   char *path = CWEB_DEFAULT_CONF_PATH;
+  char *rpath = CWEB_DEFAULT_ROUTE_PATH;
   char *logpath = NULL;
   int threads = CWEB_THREADS_DEFAULT;
   int return_value = EXIT_SUCCESS;
@@ -105,6 +108,12 @@ int main(int argc, char **argv) {
       else {
         i++;
         logpath = argv[i];
+      }
+    } else if (streq(argv[i], "-r") || streq(argv[i], "--routefile")) {
+      if (i == argc - 1) fprintf(stderr, "no file provided. Using default...\n");
+      else {
+	i++;
+	rpath = argv[i];
       }
     }
   }
@@ -166,11 +175,16 @@ int main(int argc, char **argv) {
     }
   }
   srv = httpserv_httpserver_new(ip, port, akind);
+
   // TODO: read routes from file
-  httpserv_httpserver_add_router(srv, httpserv_router_new());
-  // TODO: read root from config
+  httpserv_router_t *router = httpserv_router_parse_from_file(rpath);
+  if (!router) exit(EXIT_FAILURE);
+  httpserv_httpserver_add_router(srv, router);
+  
+  char *resload_root = ".";
+  if (tree_get_node(cfg, "resource.root")) resload_root = tree_get_node(cfg, "resource.root")->value;
   httpserv_httpserver_add_resource_loader(srv,
-                                          httpserv_resource_loader_new("."));
+                                          httpserv_resource_loader_new(resload_root));
   tree_node_t *ssl_node = tree_get_node(cfg, "ssl");
   if (ssl_node) {
     tree_node_t *certfile_node = tree_get_node(cfg, "ssl.certfile");

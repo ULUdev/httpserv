@@ -1,7 +1,7 @@
 CC = gcc
 LD = ld
 AR = ar
-CFLAGS = -fPIC -c -std=c11 -Wall -Iinclude -Ilibtree/include -ggdb
+CFLAGS = -fPIC -c -std=c11 -Wall -Iinclude -Ilibtree/include -O3
 LDFLAGS = -shared -L. -ltree -lpthread -lm $(shell pkg-config --libs openssl)
 SRC = $(wildcard src/**/*.c) $(wildcard src/*.c)
 PREFIX = /usr/local
@@ -9,11 +9,11 @@ PREFIX = /usr/local
 all: libtree.a libhttpserv.so libhttpserv.a cweb
 
 libtree.a:
-	$(MAKE) -C libtree
+	$(MAKE) -C libtree libtree.a
 	cp libtree/libtree.a .
 
 cweb: cweb.c libhttpserv.so
-	$(CC) cweb.c -std=c11 -Wall -ggdb -Iinclude -Ilibtree/include -L. -lpthread -ltree -lhttpserv -lm $(shell pkg-config --libs openssl) -o cweb
+	$(CC) cweb.c -std=c11 -Wall -O3 -Iinclude -Ilibtree/include -L. -lpthread -ltree -lhttpserv -lm $(shell pkg-config --libs openssl) -o cweb
 
 libhttpserv.so: $(SRC:.c=.o)
 	$(LD) $^ $(LDFLAGS) -o $@
