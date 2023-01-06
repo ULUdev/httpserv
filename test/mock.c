@@ -5,6 +5,7 @@
 #include "include/test_config.h"
 #include "include/test_router.h"
 #include "include/test_resource.h"
+#include "include/test_status.h"
 #include "http/method.h"
 #include <setjmp.h>
 #include <stdarg.h>
@@ -26,7 +27,8 @@ int main(void) {
       cmocka_unit_test(method_to_str),  cmocka_unit_test(str_to_method),
       cmocka_unit_test(serv_create_v6), cmocka_unit_test(route_create),
       cmocka_unit_test(router_create),  cmocka_unit_test(router_route),
-      cmocka_unit_test(resource_load),
+      cmocka_unit_test(resource_load),  cmocka_unit_test(test_numstatus),
+      cmocka_unit_test(test_strstatus),
   };
 #ifdef TEST_ENV_DOCKER
   cmocka_set_skip_filter("*v6*");

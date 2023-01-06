@@ -34,9 +34,8 @@ tests: libtree.a libhttpserv.a test/mock
 	LD_LIBRARY_PATH="$$LD_LIBRARY_PATH:$$PWD" ./test/mock
 
 install: cweb libhttpserv.so
-	mkdir -p $(PREFIX)/bin $(PREFIX)/lib
-	mv cweb $(PREFIX)/bin
-	mv libhttpserv.so $(PREFIX)/lib
+	install -Dm755 cweb $(PREFIX)/bin
+	install -Dm755 libhttpserv.so $(PREFIX)/lib
 
 test/mock: $(wildcard test/*.c)
 	$(MAKE) -C test
